@@ -7,6 +7,7 @@ export default function TranscriberView({ onBack }) {
   const [error, setError] = useState(null);
   
   const recognitionRef = useRef(null);
+  const lastFinalizedIndex = useRef(-1);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -20,13 +21,20 @@ export default function TranscriberView({ onBack }) {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
     
+    recognition.onstart = () => {
+      lastFinalizedIndex.current = -1;
+    };
+    
     recognition.onresult = (event) => {
       let finalStr = '';
       let interimStr = '';
       
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalStr += event.results[i][0].transcript + ' ';
+          if (i > lastFinalizedIndex.current) {
+            finalStr += event.results[i][0].transcript + ' ';
+            lastFinalizedIndex.current = i;
+          }
         } else {
           interimStr += event.results[i][0].transcript + ' ';
         }
@@ -46,7 +54,6 @@ export default function TranscriberView({ onBack }) {
     };
     
     recognition.onend = () => {
-      // In continuous mode, if it ends unexpectedly, we just update the state
       setIsRecording(false);
     };
     
