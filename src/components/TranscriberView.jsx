@@ -3,11 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 export default function TranscriberView({ onBack }) {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [interimTranscript, setInterimTranscript] = useState('');
   const [error, setError] = useState(null);
   
   const recognitionRef = useRef(null);
-  const savedTranscriptRef = useRef('');
+  const pendingTranscriptRef = useRef('');
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -18,23 +17,21 @@ export default function TranscriberView({ onBack }) {
     
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
-    recognition.interimResults = true;
+    recognition.interimResults = false; // Disable real-time interim results
     recognition.lang = 'en-US';
+    
+    recognition.onstart = () => {
+      pendingTranscriptRef.current = '';
+    };
     
     recognition.onresult = (event) => {
       let finalStr = '';
-      let interimStr = '';
-      
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           finalStr += event.results[i][0].transcript + ' ';
-        } else {
-          interimStr += event.results[i][0].transcript + ' ';
         }
       }
-      
-      setTranscript(savedTranscriptRef.current + finalStr);
-      setInterimTranscript(interimStr);
+      pendingTranscriptRef.current = finalStr;
     };
     
     recognition.onerror = (event) => {
@@ -46,7 +43,10 @@ export default function TranscriberView({ onBack }) {
     
     recognition.onend = () => {
       setIsRecording(false);
-      savedTranscriptRef.current = transcript;
+      if (pendingTranscriptRef.current.trim() !== '') {
+        setTranscript(prev => prev + (prev ? ' ' : '') + pendingTranscriptRef.current);
+      }
+      pendingTranscriptRef.current = '';
     };
     
     recognitionRef.current = recognition;
@@ -56,16 +56,14 @@ export default function TranscriberView({ onBack }) {
         recognitionRef.current.stop();
       }
     };
-  }, [transcript]);
+  }, []);
 
   const toggleRecording = () => {
     if (!recognitionRef.current) return;
     
     if (isRecording) {
       recognitionRef.current.stop();
-      setIsRecording(false);
-      savedTranscriptRef.current = transcript;
-      setInterimTranscript('');
+      // UI update happens automatically inside onend
     } else {
       setError(null);
       try {
@@ -79,13 +77,12 @@ export default function TranscriberView({ onBack }) {
 
   const clearTranscript = () => {
     setTranscript('');
-    setInterimTranscript('');
-    savedTranscriptRef.current = '';
+    pendingTranscriptRef.current = '';
   };
 
   return (
     <div className="container text-center">
-      <h2 className="text-xl mb-4">Free Practice Transcriber</h2>
+      <h2 className="text-xl mb-4">Batch Practice Transcriber</h2>
       
       {error && <p className="text-danger mb-4 font-bold">{error}</p>}
       
@@ -95,15 +92,22 @@ export default function TranscriberView({ onBack }) {
         justifyContent: 'flex-start', 
         textAlign: 'left',
         padding: '20px',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        flexDirection: 'column'
       }}>
         <p className="text-lg">
           {transcript}
-          <span style={{ color: '#94a3b8' }}>{interimTranscript}</span>
         </p>
-        {!transcript && !interimTranscript && !isRecording && (
+        
+        {isRecording && (
+          <div className="mt-4 pulse" style={{ color: '#10b981', fontWeight: 'bold', width: '100%', textAlign: 'center' }}>
+            Recording in progress... (Audio will be transcribed when you hit stop)
+          </div>
+        )}
+        
+        {!transcript && !isRecording && (
           <p className="italic text-secondary" style={{ width: '100%', textAlign: 'center', marginTop: '60px' }}>
-            Click "Start Recording" and begin speaking...
+            Click "Start Recording" and speak. It will transcribe once you stop.
           </p>
         )}
       </div>
@@ -119,7 +123,7 @@ export default function TranscriberView({ onBack }) {
         >
           {isRecording ? "Stop Recording" : "Start Recording"}
         </button>
-        <button onClick={clearTranscript} disabled={!transcript && !interimTranscript}>
+        <button onClick={clearTranscript} disabled={!transcript}>
           Clear Text
         </button>
       </div>
