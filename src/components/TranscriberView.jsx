@@ -7,6 +7,7 @@ export default function TranscriberView({ onBack }) {
   
   const recognitionRef = useRef(null);
   const pendingTranscriptRef = useRef('');
+  const isRecordingRef = useRef(false);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -16,42 +17,44 @@ export default function TranscriberView({ onBack }) {
     }
     
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = false; // Disable real-time interim results
+    recognition.continuous = false; // Magic fix: use non-continuous and restart manually
+    recognition.interimResults = false;
     recognition.lang = 'en-US';
     
-    recognition.onstart = () => {
-      pendingTranscriptRef.current = '';
-    };
-    
     recognition.onresult = (event) => {
-      let finalStr = '';
-      for (let i = 0; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalStr += event.results[i][0].transcript + ' ';
-        }
+      // In non-continuous mode, there's always exactly one result at index 0
+      if (event.results.length > 0) {
+        pendingTranscriptRef.current += event.results[0][0].transcript + ' ';
       }
-      pendingTranscriptRef.current = finalStr;
     };
     
     recognition.onerror = (event) => {
       if (event.error !== 'no-speech') {
         setError(`Microphone error: ${event.error}`);
+        isRecordingRef.current = false;
         setIsRecording(false);
       }
     };
     
     recognition.onend = () => {
-      setIsRecording(false);
-      if (pendingTranscriptRef.current.trim() !== '') {
-        setTranscript(prev => prev + (prev ? ' ' : '') + pendingTranscriptRef.current);
+      if (isRecordingRef.current) {
+        // Automatically restart to simulate continuous mode perfectly
+        try {
+          recognition.start();
+        } catch (e) {}
+      } else {
+        // Only update UI when recording has fully stopped
+        if (pendingTranscriptRef.current.trim() !== '') {
+          setTranscript(prev => prev + (prev ? ' ' : '') + pendingTranscriptRef.current);
+        }
+        pendingTranscriptRef.current = '';
       }
-      pendingTranscriptRef.current = '';
     };
     
     recognitionRef.current = recognition;
     
     return () => {
+      isRecordingRef.current = false;
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
@@ -61,16 +64,20 @@ export default function TranscriberView({ onBack }) {
   const toggleRecording = () => {
     if (!recognitionRef.current) return;
     
-    if (isRecording) {
+    if (isRecordingRef.current) {
+      isRecordingRef.current = false;
+      setIsRecording(false);
       recognitionRef.current.stop();
-      // UI update happens automatically inside onend
     } else {
       setError(null);
+      isRecordingRef.current = true;
+      setIsRecording(true);
       try {
         recognitionRef.current.start();
-        setIsRecording(true);
       } catch (e) {
         setError(e.message);
+        isRecordingRef.current = false;
+        setIsRecording(false);
       }
     }
   };
