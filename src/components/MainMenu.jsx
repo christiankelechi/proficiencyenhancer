@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function MainMenu({ onStart }) {
+export default function MainMenu({ onStart, onTranscriber }) {
   return (
     <div className="container">
       <h1 className="text-2xl text-center mb-4">Crossover English Assessment Simulator</h1>
