@@ -27,9 +27,9 @@ export const PART_1_PHRASES = [
 ];
 
 export const PART_2_QUESTIONS = [
-    "Describe a time when you had to deal with a difficult coworker. How did you handle the situation?",
-    "If you had to learn a completely new technology from scratch, what would your approach be?",
-    "Tell me about a project you are particularly proud of. What was your specific contribution?",
-    "How do you prioritize tasks when you have multiple urgent deadlines approaching simultaneously?",
-    "Imagine you discover a critical bug right before a major release. What steps would you take?"
+    "Describe a memorable trip you took recently. What made it so special?",
+    "If you could travel anywhere in the world tomorrow, where would you go and why?",
+    "Tell me about a time you experienced a different culture. What did you learn?",
+    "Do you prefer traveling alone or with a group of friends? Explain your reasons.",
+    "What is the most challenging part of traveling to a new country, and how do you handle it?"
 ];

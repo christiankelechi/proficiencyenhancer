@@ -21,7 +21,7 @@ export default function ResultsView({ part1Score, part2Score, onRestart }) {
       
       <p className="italic mt-8 text-lg">
         {isPassing 
-          ? "Excellent! You are well prepared for the Crossover assessment." 
+          ? "Excellent! You are well prepared for the standard English speaking assessments." 
           : "Keep practicing! Focus on repeating every word exactly in Part 1, and speaking for the full time in Part 2."}
       </p>
       
