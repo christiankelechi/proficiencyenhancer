@@ -33,15 +33,15 @@ export class SpeechService {
             let finalTranscript = '';
             
             this.recognition.onresult = (event) => {
-                let tempTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                let currentFinal = '';
+                for (let i = 0; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
-                        tempTranscript += event.results[i][0].transcript + ' ';
+                        currentFinal += event.results[i][0].transcript + ' ';
                     }
                 }
-                finalTranscript += tempTranscript;
+                finalTranscript = currentFinal;
                 
-                if (!continuous && event.results[0].isFinal) {
+                if (!continuous && event.results.length > 0 && event.results[0].isFinal) {
                     this.recognition.stop();
                 }
             };

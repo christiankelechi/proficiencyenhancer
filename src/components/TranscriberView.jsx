@@ -7,7 +7,7 @@ export default function TranscriberView({ onBack }) {
   const [error, setError] = useState(null);
   
   const recognitionRef = useRef(null);
-  const lastFinalizedIndex = useRef(-1);
+  const savedTranscriptRef = useRef('');
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -21,28 +21,19 @@ export default function TranscriberView({ onBack }) {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
     
-    recognition.onstart = () => {
-      lastFinalizedIndex.current = -1;
-    };
-    
     recognition.onresult = (event) => {
       let finalStr = '';
       let interimStr = '';
       
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
+      for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          if (i > lastFinalizedIndex.current) {
-            finalStr += event.results[i][0].transcript + ' ';
-            lastFinalizedIndex.current = i;
-          }
+          finalStr += event.results[i][0].transcript + ' ';
         } else {
           interimStr += event.results[i][0].transcript + ' ';
         }
       }
       
-      if (finalStr) {
-        setTranscript(prev => prev + finalStr);
-      }
+      setTranscript(savedTranscriptRef.current + finalStr);
       setInterimTranscript(interimStr);
     };
     
@@ -55,6 +46,7 @@ export default function TranscriberView({ onBack }) {
     
     recognition.onend = () => {
       setIsRecording(false);
+      savedTranscriptRef.current = transcript;
     };
     
     recognitionRef.current = recognition;
@@ -64,7 +56,7 @@ export default function TranscriberView({ onBack }) {
         recognitionRef.current.stop();
       }
     };
-  }, []);
+  }, [transcript]);
 
   const toggleRecording = () => {
     if (!recognitionRef.current) return;
@@ -72,6 +64,7 @@ export default function TranscriberView({ onBack }) {
     if (isRecording) {
       recognitionRef.current.stop();
       setIsRecording(false);
+      savedTranscriptRef.current = transcript;
       setInterimTranscript('');
     } else {
       setError(null);
@@ -87,6 +80,7 @@ export default function TranscriberView({ onBack }) {
   const clearTranscript = () => {
     setTranscript('');
     setInterimTranscript('');
+    savedTranscriptRef.current = '';
   };
 
   return (
