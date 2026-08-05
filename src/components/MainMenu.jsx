@@ -13,9 +13,12 @@ export default function MainMenu({ onStart }) {
         <p className="italic mt-4">Tips: Speak slowly and clearly. Make sure you are in a quiet place. We recommend using Google Chrome or Microsoft Edge.</p>
       </div>
 
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center gap-4 mt-8">
         <button onClick={onStart} style={{ padding: '16px 32px', fontSize: '18px' }}>
           START ASSESSMENT
+        </button>
+        <button onClick={onTranscriber} style={{ padding: '16px 32px', fontSize: '18px', backgroundColor: '#8b5cf6' }}>
+          FREE TRANSCRIBER
         </button>
       </div>
     </div>
